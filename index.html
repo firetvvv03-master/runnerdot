@@ -40,20 +40,28 @@
             animation: floatSlow 3s ease-in-out infinite;
         }
 
-        @keyframes neonPulse3D {
-            0%, 100% { 
-                filter: drop-shadow(0 0 14px rgba(255, 0, 127, 0.95)) 
-                        drop-shadow(0 0 35px rgba(0, 223, 216, 0.85)) 
-                        drop-shadow(0 0 55px rgba(121, 40, 202, 0.75));
+        @keyframes rainbowGlowPath {
+            0% { 
+                filter: drop-shadow(0 0 16px rgba(255, 0, 127, 1)) 
+                        drop-shadow(0 0 35px rgba(0, 223, 216, 0.9)) 
+                        drop-shadow(0 0 55px rgba(255, 215, 0, 0.9));
+                hue-rotate(0deg);
             }
             50% { 
-                filter: drop-shadow(0 0 22px rgba(0, 255, 255, 1)) 
-                        drop-shadow(0 0 45px rgba(255, 0, 127, 0.95)) 
-                        drop-shadow(0 0 75px rgba(255, 215, 0, 0.9));
+                filter: drop-shadow(0 0 24px rgba(0, 255, 255, 1)) 
+                        drop-shadow(0 0 45px rgba(255, 0, 255, 1)) 
+                        drop-shadow(0 0 75px rgba(121, 40, 202, 1));
+                hue-rotate(180deg);
+            }
+            100% { 
+                filter: drop-shadow(0 0 16px rgba(255, 0, 127, 1)) 
+                        drop-shadow(0 0 35px rgba(0, 223, 216, 0.9)) 
+                        drop-shadow(0 0 55px rgba(255, 215, 0, 0.9));
+                hue-rotate(360deg);
             }
         }
         .neon-track-3d {
-            animation: neonPulse3D 2.5s infinite ease-in-out;
+            animation: rainbowGlowPath 3s infinite linear;
         }
 
         @keyframes feverRainbow {
@@ -71,6 +79,14 @@
         }
         .boss-active {
             animation: bossPulse 1.2s infinite ease-in-out;
+        }
+
+        @keyframes floatUpFade {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-40px) scale(1.3); opacity: 0; }
+        }
+        .floating-score {
+            animation: floatUpFade 0.7s ease-out forwards;
         }
 
         .glass-panel {
@@ -98,6 +114,10 @@
             <div class="glass-panel px-3 py-1 rounded-full shadow-lg flex items-center gap-2 text-purple-900">
                 <i class="fa-solid fa-star text-yellow-400 text-lg animate-bounce"></i>
                 <span id="scoreDisplay" class="font-game text-lg md:text-xl">0</span>
+            </div>
+            <div class="glass-panel px-3 py-1 rounded-full shadow-lg flex items-center gap-2 text-purple-900">
+                <i class="fa-solid fa-gem text-cyan-400 text-base"></i>
+                <span id="gemDisplay" class="font-game text-base md:text-lg">0</span>
             </div>
             <div class="glass-panel px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5 text-purple-900">
                 <i class="fa-solid fa-bolt text-amber-400 text-base"></i>
@@ -143,19 +163,14 @@
         
         <div id="playArea" class="relative w-full h-full max-h-[520px] flex items-center justify-center cursor-pointer">
             
-            <!-- In-Arena Top HUD (Heart HP & Compact Timer) -->
             <div class="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-white/70 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-lg border border-white text-purple-900 pointer-events-none">
-                <!-- Heart System HP -->
                 <div class="flex items-center gap-1">
                     <span id="shieldBadge" class="hidden text-cyan-600 mr-1 text-xs"><i class="fa-solid fa-shield-halved"></i></span>
-                    <div id="heartContainer" class="flex items-center gap-1 text-red-500 text-sm">
-                        <!-- Filled/Empty hearts generated via JS -->
-                    </div>
+                    <div id="heartContainer" class="flex items-center gap-1 text-red-500 text-sm"></div>
                 </div>
 
                 <div class="h-4 w-[1px] bg-purple-300"></div>
 
-                <!-- Compact Target Hit Timer -->
                 <div id="patternTimerContainer" class="flex items-center gap-2">
                     <span class="font-game text-[10px] text-indigo-600 flex items-center gap-0.5">
                         <i class="fa-solid fa-stopwatch"></i>
@@ -163,7 +178,7 @@
                     <div class="w-20 bg-gray-200/80 h-1.5 rounded-full overflow-hidden p-0.5 shadow-inner">
                         <div id="timerBar" class="bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-400 h-full rounded-full transition-all duration-100" style="width: 100%;"></div>
                     </div>
-                    <span id="timerText" class="font-game text-[10px] w-7 text-right">5.0s</span>
+                    <span id="timerText" class="font-game text-[10px] w-7 text-right">6.0s</span>
                 </div>
             </div>
 
@@ -174,6 +189,12 @@
                         <stop offset="30%" stop-color="#7928CA" />
                         <stop offset="60%" stop-color="#00DFD8" />
                         <stop offset="100%" stop-color="#FFD700" />
+                    </linearGradient>
+
+                    <linearGradient id="fill3DGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#FFF366" />
+                        <stop offset="50%" stop-color="#00DFD8" />
+                        <stop offset="100%" stop-color="#FF007F" />
                     </linearGradient>
 
                     <filter id="superGlow" x="-50%" y="-50%" width="200%" height="200%">
@@ -191,15 +212,18 @@
 
                 <g id="bossAvatarGroup" class="hidden boss-active" transform="translate(260, 260)">
                     <circle cx="0" cy="0" r="45" fill="rgba(20, 10, 30, 0.85)" stroke="#FF0055" stroke-width="4" filter="url(#superGlow)" />
-                    <text x="0" y="8" text-anchor="middle" font-size="32">👾</text>
+                    <text id="bossAvatarEmoji" x="0" y="8" text-anchor="middle" font-size="32">👾</text>
                 </g>
 
                 <g id="trackExtrusions" fill="rgba(0, 0, 0, 0.45)" stroke="rgba(255, 255, 255, 0.2)" stroke-width="2"></g>
-                <path id="trackShadow" d="" fill="none" stroke="#FF007F" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" opacity="0.3" filter="url(#superGlow)" />
-                <path id="trackPath" d="" fill="none" stroke="url(#neonGradient3D)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
-                <path id="trackInnerLine" d="" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-dasharray="10,12" opacity="0.95" />
+                
+                <path id="trackShadow" d="" fill="none" stroke="#FF007F" stroke-width="58" stroke-linecap="round" stroke-linejoin="round" opacity="0.45" filter="url(#superGlow)" />
+                <path id="trackBackgroundFill" d="" fill="none" stroke="url(#fill3DGrad)" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" opacity="0.95" />
+                <path id="trackPath" d="" fill="none" stroke="url(#neonGradient3D)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" />
+                <path id="trackInnerLine" d="" fill="none" stroke="#FFF9D6" stroke-width="6" stroke-linecap="round" stroke-dasharray="16,18" opacity="0.95" />
 
                 <g id="powerUpsGroup"></g>
+                <g id="trailBubblesGroup"></g>
                 <g id="targetsGroup"></g>
                 <g id="characterGroup" class="transition-transform duration-75" filter="url(#superGlow)"></g>
             </svg>
@@ -210,7 +234,7 @@
                 <span id="pipLabel" class="font-game text-[9px] text-purple-900 uppercase">COM View</span>
                 <div class="relative w-full h-full flex items-center justify-center scale-[0.2]">
                     <svg id="svgPipTrack" class="w-[520px] h-[520px] overflow-visible" viewBox="0 0 520 520">
-                        <path id="trackPathPip" d="" fill="none" stroke="#FF007F" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+                        <path id="trackPathPip" d="" fill="none" stroke="#FF007F" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" />
                         <g id="targetsGroupPip"></g>
                         <g id="characterGroupPip"></g>
                     </svg>
@@ -228,19 +252,51 @@
                 </div>
             </div>
 
-            <!-- End-of-Run Summary Modal Overlay -->
             <div id="summaryModal" class="absolute inset-0 bg-black/70 backdrop-blur-md rounded-3xl z-40 flex items-center justify-center p-4 hidden">
                 <div class="glass-panel w-full max-w-xs rounded-3xl p-5 shadow-2xl text-purple-900 flex flex-col items-center animate-float">
                     <h3 class="font-game text-xl text-pink-600 mb-1">RUN SUMMARY</h3>
                     <p id="summarySubtitle" class="text-xs text-gray-600 font-bold mb-3">Great performance!</p>
                     <div class="w-full space-y-2 text-xs bg-white/60 p-3 rounded-2xl mb-4">
                         <div class="flex justify-between"><span>Final Score:</span><strong id="sumScore" class="font-game text-sm text-purple-900">0</strong></div>
+                        <div class="flex justify-between"><span>Gems Earned:</span><strong id="sumGems" class="font-game text-sm text-cyan-600">+0 💎</strong></div>
                         <div class="flex justify-between"><span>Max Combo:</span><strong id="sumCombo" class="font-game text-sm text-pink-600">x0</strong></div>
-                        <div class="flex justify-between"><span>Perfect Hits:</span><strong id="sumPerfect" class="font-game text-sm text-cyan-600">0</strong></div>
                         <div class="flex justify-between"><span>Accuracy:</span><strong id="sumAccuracy" class="font-game text-sm text-emerald-600">0%</strong></div>
                     </div>
                     <button id="btnDismissSummary" class="w-full py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-game text-sm rounded-xl shadow-md hover:brightness-110 active:scale-95 transition">
                         PLAY AGAIN
+                    </button>
+                </div>
+            </div>
+
+            <div id="adModal" class="absolute inset-0 bg-black/80 backdrop-blur-md rounded-3xl z-50 flex items-center justify-center p-4 hidden">
+                <div class="glass-panel w-full max-w-xs rounded-3xl p-6 shadow-2xl text-purple-900 flex flex-col items-center text-center animate-float">
+                    <div class="w-12 h-12 rounded-full bg-indigo-500 text-white flex items-center justify-center text-xl shadow-md mb-2">
+                        <i class="fa-solid fa-tv animate-pulse"></i>
+                    </div>
+                    <h3 class="font-game text-lg text-indigo-700 mb-1">SPONSORED REWARD AD</h3>
+                    <p id="adDescription" class="text-xs text-gray-600 mb-4">Watch this quick simulated ad to claim your free reward!</p>
+                    <div class="w-full bg-purple-900/10 h-16 rounded-xl flex items-center justify-center font-game text-xl text-pink-600 mb-4 border border-purple-200">
+                        Ad Playing... <span id="adCountdown" class="ml-2">3s</span>
+                    </div>
+                    <button id="btnCloseAd" disabled class="w-full py-2 bg-gray-300 text-gray-500 font-game text-xs rounded-xl cursor-not-allowed transition">
+                        PLEASE WAIT...
+                    </button>
+                </div>
+            </div>
+
+            <div id="dailyRewardModal" class="absolute inset-0 bg-black/70 backdrop-blur-md rounded-3xl z-50 flex items-center justify-center p-4 hidden">
+                <div class="glass-panel w-full max-w-xs rounded-3xl p-6 shadow-2xl text-purple-900 flex flex-col items-center animate-float">
+                    <div class="w-14 h-14 rounded-full bg-yellow-400 text-white flex items-center justify-center text-2xl shadow-md mb-2">
+                        <i class="fa-solid fa-gift animate-bounce"></i>
+                    </div>
+                    <h3 class="font-game text-xl text-pink-600 mb-1">DAILY LOGIN BONUS</h3>
+                    <p class="text-xs text-gray-600 text-center mb-4">Come back every day for free gems & rewards!</p>
+                    <div id="dailyRewardBox" class="w-full bg-white/60 p-3 rounded-2xl text-center mb-4">
+                        <div class="font-game text-sm text-purple-900 mb-1">Day 1 Reward</div>
+                        <div class="font-game text-2xl text-cyan-500">+25 💎</div>
+                    </div>
+                    <button id="btnClaimDaily" class="w-full py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-game text-sm rounded-xl shadow-md hover:brightness-110 active:scale-95 transition">
+                        CLAIM REWARD!
                     </button>
                 </div>
             </div>
@@ -277,12 +333,14 @@
                 </button>
             </div>
 
-            <div class="grid grid-cols-6 gap-1 my-3 bg-purple-200/50 p-1 rounded-xl text-xs">
+            <div class="grid grid-cols-8 gap-1 my-3 bg-purple-200/50 p-1 rounded-xl text-[10px]">
                 <button id="tabTracks" class="py-2 font-bold rounded-lg transition bg-white text-purple-800 shadow-sm">Tracks</button>
                 <button id="tabSkins" class="py-2 font-bold rounded-lg transition text-gray-600">Skins</button>
+                <button id="tabShop" class="py-2 font-bold rounded-lg transition text-gray-600">Shop</button>
                 <button id="tabThemes" class="py-2 font-bold rounded-lg transition text-gray-600">Themes</button>
-                <button id="tabMissions" class="py-2 font-bold rounded-lg transition text-gray-600">Missions</button>
+                <button id="tabScores" class="py-2 font-bold rounded-lg transition text-gray-600">Scores</button>
                 <button id="tabTrophies" class="py-2 font-bold rounded-lg transition text-gray-600">Trophies</button>
+                <button id="tabMissions" class="py-2 font-bold rounded-lg transition text-gray-600">Missions</button>
                 <button id="tabModes" class="py-2 font-bold rounded-lg transition text-gray-600">Modes</button>
             </div>
 
@@ -299,8 +357,19 @@
                 <div id="contentSkins" class="hidden space-y-4">
                     <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Choose Character</h4>
                     <div id="skinGrid" class="grid grid-cols-2 gap-3"></div>
+                    <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider pt-2">Choose Animation Style</h4>
+                    <div id="animGrid" class="grid grid-cols-2 gap-2"></div>
+                    <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider pt-2">Choose Pet Companion</h4>
+                    <div id="petGrid" class="grid grid-cols-2 gap-2"></div>
+                    <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider pt-2">Choose Cosmetic Hat</h4>
+                    <div id="hatGrid" class="grid grid-cols-3 gap-2"></div>
                     <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider pt-2">Runner Trail Effect</h4>
                     <div id="trailGrid" class="grid grid-cols-3 gap-2"></div>
+                </div>
+
+                <div id="contentShop" class="hidden space-y-4">
+                    <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Gem Shop & Rewards</h4>
+                    <div id="shopGrid" class="grid grid-cols-1 gap-3"></div>
                 </div>
 
                 <div id="contentThemes" class="hidden space-y-3">
@@ -308,14 +377,24 @@
                     <div id="themeGrid" class="space-y-2"></div>
                 </div>
 
-                <div id="contentMissions" class="hidden space-y-3">
-                    <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Daily Mission Quests</h4>
-                    <div id="missionGrid" class="space-y-2.5"></div>
+                <div id="contentScores" class="hidden space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Global & Local Leaderboard</h4>
+                        <button id="btnRefreshGlobal" class="text-[10px] bg-pink-500 text-white px-2 py-1 rounded-lg font-bold hover:brightness-110 transition shadow-sm">
+                            <i class="fa-solid fa-rotate mr-1"></i> Refresh Global
+                        </button>
+                    </div>
+                    <div id="scoresGrid" class="space-y-2"></div>
                 </div>
 
                 <div id="contentTrophies" class="hidden space-y-3">
                     <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Achievement Trophy Room</h4>
                     <div id="trophyGrid" class="space-y-2.5"></div>
+                </div>
+
+                <div id="contentMissions" class="hidden space-y-3">
+                    <h4 class="text-xs font-bold uppercase text-gray-500 tracking-wider">Daily Mission Quests</h4>
+                    <div id="missionGrid" class="space-y-2.5"></div>
                 </div>
 
                 <div id="contentModes" class="hidden space-y-3">
@@ -350,9 +429,14 @@
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.ctx = new AudioContext();
                 }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
             }
             playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.3) {
-                if (this.muted || !this.ctx) return;
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
                 try {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
@@ -366,34 +450,31 @@
                     osc.stop(this.ctx.currentTime + duration);
                 } catch (e) {}
             }
-            playHit(judgment) {
-                this.init();
+            playHit(judgment, combo = 0) {
+                let pitchMultiplier = 1 + Math.min(1.5, combo * 0.02);
                 if (judgment === 'PERFECT') {
-                    this.playTone(523.25, 'triangle', 0.1, 0.3);
-                    setTimeout(() => this.playTone(659.25, 'triangle', 0.1, 0.3), 60);
-                    setTimeout(() => this.playTone(783.99, 'triangle', 0.15, 0.4), 120);
+                    this.playTone(523.25 * pitchMultiplier, 'triangle', 0.1, 0.3);
+                    setTimeout(() => this.playTone(659.25 * pitchMultiplier, 'triangle', 0.1, 0.3), 60);
+                    setTimeout(() => this.playTone(783.99 * pitchMultiplier, 'triangle', 0.15, 0.4), 120);
                 } else if (judgment === 'GREAT') {
-                    this.playTone(587.33, 'triangle', 0.1, 0.3);
-                    setTimeout(() => this.playTone(739.99, 'triangle', 0.15, 0.3), 80);
+                    this.playTone(587.33 * pitchMultiplier, 'triangle', 0.1, 0.3);
+                    setTimeout(() => this.playTone(739.99 * pitchMultiplier, 'triangle', 0.15, 0.3), 80);
                 } else if (judgment === 'GOOD') {
-                    this.playTone(440, 'sine', 0.15, 0.2);
+                    this.playTone(440 * pitchMultiplier, 'sine', 0.15, 0.2);
                 } else {
                     this.playTone(180, 'sawtooth', 0.2, 0.2);
                 }
             }
             playPowerUp() {
-                this.init();
                 this.playTone(600, 'sine', 0.1, 0.3);
                 setTimeout(() => this.playTone(850, 'sine', 0.15, 0.4), 80);
                 setTimeout(() => this.playTone(1200, 'triangle', 0.2, 0.4), 160);
             }
             playBossAlarm() {
-                this.init();
                 this.playTone(220, 'sawtooth', 0.2, 0.4);
                 setTimeout(() => this.playTone(150, 'sawtooth', 0.3, 0.5), 200);
             }
             playSymbolComplete() {
-                this.init();
                 this.playTone(523.25, 'sine', 0.12, 0.3);
                 setTimeout(() => this.playTone(659.25, 'sine', 0.12, 0.3), 100);
                 setTimeout(() => this.playTone(1046.50, 'triangle', 0.3, 0.4), 200);
@@ -461,89 +542,73 @@
 
         const CHARACTERS = {
             'cat': { 
-                name: 'Mochi Cat', 
-                svg: `<g transform="translate(-25, -25)">
-                    <polygon points="8,18 2,2 20,10" fill="#FFB7B2"/>
-                    <polygon points="42,18 48,2 30,10" fill="#FFB7B2"/>
-                    <circle cx="25" cy="26" r="20" fill="#FFF5F5" stroke="#FF007F" stroke-width="2"/>
-                    <circle cx="16" cy="22" r="2.5" fill="#222"/>
-                    <circle cx="34" cy="22" r="2.5" fill="#222"/>
-                    <circle cx="15" cy="21" r="0.8" fill="#FFF"/>
-                    <circle cx="33" cy="21" r="0.8" fill="#FFF"/>
-                    <ellipse cx="13" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="37" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <polygon points="25,26 23,24.5 27,24.5" fill="#FF69B4"/>
-                    <path d="M 22,29 Q 25,32 28,29" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
-                </g>` 
+                name: 'Mochi Cat', cost: 0, unlocked: true,
+                svg: `<g transform="translate(-25, -25)"><polygon points="8,18 2,2 20,10" fill="#FFB7B2"/><polygon points="42,18 48,2 30,10" fill="#FFB7B2"/><circle cx="25" cy="26" r="20" fill="#FFF5F5" stroke="#FF007F" stroke-width="2"/><circle cx="16" cy="22" r="2.5" fill="#222"/><circle cx="34" cy="22" r="2.5" fill="#222"/><circle cx="15" cy="21" r="0.8" fill="#FFF"/><circle cx="33" cy="21" r="0.8" fill="#FFF"/><ellipse cx="13" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="37" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><polygon points="25,26 23,24.5 27,24.5" fill="#FF69B4"/><path d="M 22,29 Q 25,32 28,29" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/></g>` 
             },
             'bunny': { 
-                name: 'Berry Bunny', 
-                svg: `<g transform="translate(-25, -30)">
-                    <ellipse cx="16" cy="10" rx="5" ry="14" fill="#FFFFFF" stroke="#00DFD8" stroke-width="2"/>
-                    <ellipse cx="16" cy="11" rx="2.5" ry="9" fill="#FFB6C1"/>
-                    <ellipse cx="34" cy="10" rx="5" ry="14" fill="#FFFFFF" stroke="#00DFD8" stroke-width="2"/>
-                    <ellipse cx="34" cy="11" rx="2.5" ry="9" fill="#FFB6C1"/>
-                    <circle cx="25" cy="30" r="18" fill="#FFFFFF" stroke="#00DFD8" stroke-width="2"/>
-                    <circle cx="18" cy="26" r="2.5" fill="#222"/>
-                    <circle cx="32" cy="26" r="2.5" fill="#222"/>
-                    <circle cx="17" cy="25" r="0.8" fill="#FFF"/>
-                    <circle cx="31" cy="25" r="0.8" fill="#FFF"/>
-                    <ellipse cx="14" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="36" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="25" cy="29" rx="2" ry="1.3" fill="#FF69B4"/>
-                    <path d="M 22,33 Q 25,35 28,33" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
-                </g>` 
+                name: 'Berry Bunny', cost: 0, unlocked: true,
+                svg: `<g transform="translate(-25, -30)"><ellipse cx="16" cy="10" rx="5" ry="14" fill="#FFFFFF" stroke="#00DFD8" stroke-width="2"/><ellipse cx="16" cy="11" rx="2.5" ry="9" fill="#FFB6C1"/><ellipse cx="34" cy="10" rx="5" ry="14" fill="#FFFFFF" stroke="#00DFD8" stroke-width="2"/><ellipse cx="34" cy="11" rx="2.5" ry="9" fill="#FFB6C1"/><circle cx="25" cy="30" r="18" fill="#FFFFFF" stroke="#00DFD8" stroke-width="2"/><circle cx="18" cy="26" r="2.5" fill="#222"/><circle cx="32" cy="26" r="2.5" fill="#222"/><circle cx="17" cy="25" r="0.8" fill="#FFF"/><circle cx="31" cy="25" r="0.8" fill="#FFF"/><ellipse cx="14" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="36" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="25" cy="29" rx="2" ry="1.3" fill="#FF69B4"/><path d="M 22,33 Q 25,35 28,33" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/></g>` 
             },
             'boba': { 
-                name: 'Boba Bear', 
-                svg: `<g transform="translate(-25, -25)">
-                    <circle cx="13" cy="8" r="6" fill="#7928CA"/>
-                    <circle cx="37" cy="8" r="6" fill="#7928CA"/>
-                    <rect x="10" y="12" width="30" height="32" rx="8" fill="#FFF" stroke="#7928CA" stroke-width="2"/>
-                    <rect x="22" y="2" width="6" height="12" rx="2" fill="#FF007F" transform="rotate(10 25 10)"/>
-                    <circle cx="17" cy="22" r="2.5" fill="#222"/>
-                    <circle cx="33" cy="22" r="2.5" fill="#222"/>
-                    <circle cx="16" cy="21" r="0.8" fill="#FFF"/>
-                    <circle cx="32" cy="21" r="0.8" fill="#FFF"/>
-                    <ellipse cx="14" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="36" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <circle cx="25" cy="25" r="1.5" fill="#222"/>
-                    <path d="M 22,29 Q 25,32 28,29" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
-                </g>` 
+                name: 'Boba Bear', cost: 50, unlocked: false,
+                svg: `<g transform="translate(-25, -25)"><circle cx="13" cy="8" r="6" fill="#7928CA"/><circle cx="37" cy="8" r="6" fill="#7928CA"/><rect x="10" y="12" width="30" height="32" rx="8" fill="#FFF" stroke="#7928CA" stroke-width="2"/><rect x="22" y="2" width="6" height="12" rx="2" fill="#FF007F" transform="rotate(10 25 10)"/><circle cx="17" cy="22" r="2.5" fill="#222"/><circle cx="33" cy="22" r="2.5" fill="#222"/><circle cx="16" cy="21" r="0.8" fill="#FFF"/><circle cx="32" cy="21" r="0.8" fill="#FFF"/><ellipse cx="14" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="36" cy="26" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><circle cx="25" cy="25" r="1.5" fill="#222"/><path d="M 22,29 Q 25,32 28,29" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/></g>` 
             },
             'panda': { 
-                name: 'Panda Pal', 
-                svg: `<g transform="translate(-25, -25)">
-                    <circle cx="10" cy="12" r="7" fill="#222"/>
-                    <circle cx="40" cy="12" r="7" fill="#222"/>
-                    <circle cx="25" cy="26" r="20" fill="#FFF" stroke="#222" stroke-width="2"/>
-                    <ellipse cx="17" cy="24" rx="5" ry="6" fill="#222" transform="rotate(-15 17 24)"/>
-                    <ellipse cx="33" cy="24" rx="5" ry="6" fill="#222" transform="rotate(15 33 24)"/>
-                    <circle cx="17" cy="24" r="2" fill="#FFF"/>
-                    <circle cx="33" cy="24" r="2" fill="#FFF"/>
-                    <ellipse cx="12" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="38" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="25" cy="28" rx="2" ry="1.3" fill="#222"/>
-                    <path d="M 22,31 Q 25,33 28,31" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
-                </g>` 
+                name: 'Panda Pal', cost: 100, unlocked: false,
+                svg: `<g transform="translate(-25, -25)"><circle cx="10" cy="12" r="7" fill="#222"/><circle cx="40" cy="12" r="7" fill="#222"/><circle cx="25" cy="26" r="20" fill="#FFF" stroke="#222" stroke-width="2"/><ellipse cx="17" cy="24" rx="5" ry="6" fill="#222" transform="rotate(-15 17 24)"/><ellipse cx="33" cy="24" rx="5" ry="6" fill="#222" transform="rotate(15 33 24)"/><circle cx="17" cy="24" r="2" fill="#FFF"/><circle cx="33" cy="24" r="2" fill="#FFF"/><ellipse cx="12" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="38" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="25" cy="28" rx="2" ry="1.3" fill="#222"/><path d="M 22,31 Q 25,33 28,31" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/></g>` 
             },
             'unicorn': { 
-                name: 'Magic Unicorn', 
-                svg: `<g transform="translate(-25, -30)">
-                    <polygon points="25,-6 32,14 18,14" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
-                    <path d="M 12,18 Q 8,24 14,28" fill="none" stroke="#FF69B4" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="25" cy="30" r="18" fill="#FFF0F5" stroke="#FF69B4" stroke-width="2"/>
-                    <circle cx="18" cy="26" r="2.5" fill="#222"/>
-                    <circle cx="32" cy="26" r="2.5" fill="#222"/>
-                    <circle cx="17" cy="25" r="0.8" fill="#FFF"/>
-                    <circle cx="31" cy="25" r="0.8" fill="#FFF"/>
-                    <ellipse cx="14" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="36" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/>
-                    <ellipse cx="25" cy="29" rx="2" ry="1.3" fill="#FF69B4"/>
-                    <path d="M 22,33 Q 25,36 28,33" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
-                </g>` 
+                name: 'Magic Unicorn', cost: 150, unlocked: false,
+                svg: `<g transform="translate(-25, -30)"><polygon points="25,-6 32,14 18,14" fill="#FFD700" stroke="#FFA500" stroke-width="1"/><path d="M 12,18 Q 8,24 14,28" fill="none" stroke="#FF69B4" stroke-width="3" stroke-linecap="round"/><circle cx="25" cy="30" r="18" fill="#FFF0F5" stroke="#FF69B4" stroke-width="2"/><circle cx="18" cy="26" r="2.5" fill="#222"/><circle cx="32" cy="26" r="2.5" fill="#222"/><circle cx="17" cy="25" r="0.8" fill="#FFF"/><circle cx="31" cy="25" r="0.8" fill="#FFF"/><ellipse cx="14" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="36" cy="30" rx="3" ry="1.5" fill="#FFB6C1" opacity="0.8"/><ellipse cx="25" cy="29" rx="2" ry="1.3" fill="#FF69B4"/><path d="M 22,33 Q 25,36 28,33" fill="none" stroke="#222" stroke-width="1.5" stroke-linecap="round"/></g>` 
             }
         };
+
+        const ANIMATIONS = {
+            'bounce': { name: 'Standard Bounce', cost: 0, unlocked: true },
+            'spin': { name: 'Hyper Spin', cost: 70, unlocked: false },
+            'float': { name: 'Gentle Float', cost: 90, unlocked: false }
+        };
+
+        const PETS = {
+            'none': { name: 'No Pet', cost: 0, unlocked: true, svg: '' },
+            'star_pet': { 
+                name: 'Sparkle Star', cost: 100, unlocked: false,
+                svg: `<g transform="translate(25, -20) scale(0.5)"><polygon points="0,-12 3,-3 12,-3 5,2 8,11 0,6 -8,11 -5,2 -12,-3 -3,-3" fill="#FFD700" stroke="#FFA500" stroke-width="1" filter="url(#superGlow)"/></g>`
+            },
+            'cloud_pet': { 
+                name: 'Puffy Cloud', cost: 130, unlocked: false,
+                svg: `<g transform="translate(25, -20) scale(0.5)"><ellipse cx="0" cy="0" rx="12" ry="8" fill="#FFF" stroke="#00FFFF" stroke-width="2" filter="url(#superGlow)"/><circle cx="-6" cy="-4" r="6" fill="#FFF"/><circle cx="6" cy="-4" r="6" fill="#FFF"/></g>`
+            }
+        };
+
+        const HATS = {
+            'none': { name: 'No Hat', cost: 0, unlocked: true, svg: '' },
+            'crown': { 
+                name: 'Royal Crown', cost: 80, unlocked: false, 
+                svg: `<g transform="translate(25, 2) scale(0.6)"><polygon points="10,10 15,25 35,25 40,10 25,18" fill="#FFD700" stroke="#FFA500" stroke-width="2"/><circle cx="10" cy="8" r="3" fill="#FF007F"/><circle cx="25" cy="14" r="3" fill="#00FFFF"/><circle cx="40" cy="8" r="3" fill="#00FFCC"/></g>` 
+            },
+            'wizard': { 
+                name: 'Wizard Cap', cost: 120, unlocked: false, 
+                svg: `<g transform="translate(25, -2) scale(0.6)"><polygon points="25,-12 8,16 42,16" fill="#7928CA" stroke="#FF007F" stroke-width="2"/><ellipse cx="25" cy="16" rx="18" ry="4" fill="#7928CA"/><circle cx="25" cy="0" r="2" fill="#FFD700"/><circle cx="20" cy="8" r="1.5" fill="#00FFFF"/></g>` 
+            },
+            'bow': { 
+                name: 'Pink Bow', cost: 60, unlocked: false, 
+                svg: `<g transform="translate(25, 8) scale(0.6)"><circle cx="0" cy="0" r="5" fill="#FF69B4"/><polygon points="-5,0 -16,-10 -12,10" fill="#FF1493"/><polygon points="5,0 16,-10 12,10" fill="#FF1493"/></g>` 
+            }
+        };
+
+        const TRAILS = {
+            'rainbow': { name: 'Vibrant Rainbow Sparkle', cost: 0, unlocked: true, colors: ['#FF0055', '#FF3300', '#FFCC00', '#33FF00', '#00FFFF', '#0066FF', '#9900FF', '#FF00CC'] },
+            'gold': { name: 'Golden Glow', cost: 60, unlocked: false, colors: ['#FFF366', '#FFD700', '#FFA500', '#FF8C00', '#B8860B'] },
+            'bubble': { name: 'Aqua Bubble', cost: 60, unlocked: false, colors: ['#E0FFFF', '#AFEEEE', '#00FFFF', '#00CED1', '#20B2AA'] },
+            'firefly': { name: 'Firefly Spark', cost: 100, unlocked: false, colors: ['#FFFFE0', '#ADFF2F', '#7FFF00', '#32CD32', '#006400'] }
+        };
+
+        const BOSSES = [
+            { name: 'NEON SHADOW DRAGON', emoji: '👾', maxHp: 10 },
+            { name: 'CYBER GHOST', emoji: '👻', maxHp: 12 },
+            { name: 'SUGAR RUSH SLIME', emoji: '🟢', maxHp: 8 }
+        ];
 
         const THEMES = {
             'cyber': { name: 'Cyberpunk Synthwave', class: 'bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950' },
@@ -551,16 +616,11 @@
             'starry': { name: 'Magical Starry Night', class: 'bg-gradient-to-br from-gray-900 via-blue-950 to-slate-900' }
         };
 
-        const TRAILS = {
-            'rainbow': { name: 'Rainbow Sparkle', color: '#FF007F' },
-            'gold': { name: 'Golden Glow', color: '#FFD700' },
-            'bubble': { name: 'Aqua Bubble', color: '#00FFFF' }
-        };
-
         class CuteTrackGame {
             constructor() {
                 this.score = 0;
                 this.scoreP2 = 0;
+                this.gems = parseInt(localStorage.getItem('trackrunner_gems')) || 150;
                 this.combo = 0;
                 this.maxComboReached = 0;
                 this.perfectCount = 0;
@@ -576,8 +636,13 @@
                 this.gameMode = 'single';
                 this.currentTrackKey = 'Circle';
                 this.currentSkinKey = 'cat';
+                this.currentAnimKey = 'bounce';
+                this.currentPetKey = 'none';
+                this.currentHatKey = 'none';
                 this.currentThemeKey = 'cyber';
                 this.currentTrailKey = 'rainbow';
+
+                this.trailHistory = [];
 
                 this.playerHp = 5;
                 this.maxPlayerHp = 5;
@@ -585,32 +650,51 @@
                 this.feverActive = false;
                 this.feverTimer = 0;
 
+                this.powerUpLevel = parseInt(localStorage.getItem('trackrunner_pow_lvl')) || 1;
+
                 this.hitsOnCurrentSymbol = 0;
                 this.targetHitsNeeded = 5;
                 this.totalHitsCounter = 0;
                 this.pathLength = 0;
 
-                this.targetHitTimeLeft = 5.0;
-                this.targetHitMaxTime = 5.0;
+                this.targetHitTimeLeft = 6.0;
+                this.targetHitMaxTime = 6.0;
 
                 this.activeTargetsP1 = [];
                 this.activeTargetsP2 = [];
                 this.activePowerUps = [];
+                this.activeHazards = [];
 
                 this.isBossFight = false;
                 this.bossHp = 10;
                 this.bossMaxHp = 10;
+                this.currentBoss = BOSSES[0];
+
+                let savedSkins = JSON.parse(localStorage.getItem('trackrunner_skins'));
+                if (savedSkins) { Object.keys(savedSkins).forEach(k => { if (CHARACTERS[k]) CHARACTERS[k].unlocked = savedSkins[k]; }); }
+
+                let savedAnims = JSON.parse(localStorage.getItem('trackrunner_anims'));
+                if (savedAnims) { Object.keys(savedAnims).forEach(k => { if (ANIMATIONS[k]) ANIMATIONS[k].unlocked = savedAnims[k]; }); }
+
+                let savedPets = JSON.parse(localStorage.getItem('trackrunner_pets'));
+                if (savedPets) { Object.keys(savedPets).forEach(k => { if (PETS[k]) PETS[k].unlocked = savedPets[k]; }); }
+
+                let savedHats = JSON.parse(localStorage.getItem('trackrunner_hats'));
+                if (savedHats) { Object.keys(savedHats).forEach(k => { if (HATS[k]) HATS[k].unlocked = savedHats[k]; }); }
+
+                let savedTrails = JSON.parse(localStorage.getItem('trackrunner_trails'));
+                if (savedTrails) { Object.keys(savedTrails).forEach(k => { if (TRAILS[k]) TRAILS[k].unlocked = savedTrails[k]; }); }
+
+                this.highScores = JSON.parse(localStorage.getItem('trackrunner_highscores')) || [];
+                this.globalScores = [];
 
                 this.achievements = JSON.parse(localStorage.getItem('trackrunner_achievements')) || {
-                    firstRun: false,
-                    combo50: false,
-                    bossSlayer: false,
-                    collector: false
+                    firstRun: false, combo50: false, bossSlayer: false
                 };
 
                 this.missions = JSON.parse(localStorage.getItem('trackrunner_missions')) || {
-                    completeRuns: { desc: 'Complete 3 runs', target: 3, current: 0, claimed: false },
-                    score2000: { desc: 'Score over 2,000 points', target: 2000, current: 0, claimed: false }
+                    completeRuns: { desc: 'Complete 3 runs', target: 3, current: 0 },
+                    score2000: { desc: 'Score over 2,000 points', target: 2000, current: 0 }
                 };
 
                 this.svgTrack = document.getElementById('trackPath');
@@ -618,11 +702,14 @@
                 this.charGroup = document.getElementById('characterGroup');
                 this.targetsGroup = document.getElementById('targetsGroup');
                 this.powerUpsGroup = document.getElementById('powerUpsGroup');
+                this.trailBubblesGroup = document.getElementById('trailBubblesGroup');
                 
                 this.bossAvatarGroup = document.getElementById('bossAvatarGroup');
+                this.bossAvatarEmoji = document.getElementById('bossAvatarEmoji');
                 this.bossHpContainer = document.getElementById('bossHpContainer');
                 this.bossHpBar = document.getElementById('bossHpBar');
                 this.bossHpText = document.getElementById('bossHpText');
+                this.bossNameLabel = document.getElementById('bossNameLabel');
                 
                 this.timerBar = document.getElementById('timerBar');
                 this.timerText = document.getElementById('timerText');
@@ -630,6 +717,7 @@
                 this.shieldBadge = document.getElementById('shieldBadge');
                 
                 this.scoreDisplay = document.getElementById('scoreDisplay');
+                this.gemDisplay = document.getElementById('gemDisplay');
                 this.comboDisplay = document.getElementById('comboDisplay');
                 this.targetCountDisplay = document.getElementById('targetCountDisplay');
                 this.judgmentOverlay = document.getElementById('judgmentOverlay');
@@ -638,6 +726,8 @@
                 this.btnP2Action = document.getElementById('btnP2Action');
                 this.pipMiniView = document.getElementById('pipMiniView');
                 this.summaryModal = document.getElementById('summaryModal');
+                this.dailyRewardModal = document.getElementById('dailyRewardModal');
+                this.adModal = document.getElementById('adModal');
 
                 this.lastTime = 0;
                 this.init();
@@ -649,13 +739,48 @@
                 this.renderCharacters();
                 this.buildTrackSelectors();
                 this.buildSkinSelectors();
+                this.buildShopSelectors();
                 this.buildThemeSelectors();
-                this.buildMissionsList();
+                this.fetchGlobalLeaderboard();
                 this.buildTrophyList();
+                this.buildMissionsList();
                 this.setGameMode('single');
                 this.updateHpBar();
+                this.updateGemDisplay();
+                this.checkDailyLogin();
                 
                 requestAnimationFrame((t) => this.gameLoop(t));
+            }
+
+            async fetchGlobalLeaderboard() {
+                try {
+                    const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://jsonplaceholder.typicode.com/users'));
+                    if (response.ok) {
+                        this.globalScores = [
+                            { name: '🌟 StarRunner', score: 9850, skin: 'unicorn' },
+                            { name: '🐱 MochiKing', score: 8420, skin: 'cat' },
+                            { name: '🐰 BerryQueen', score: 7600, skin: 'bunny' },
+                            { name: '🐼 PandaPro', score: 6350, skin: 'panda' },
+                            { name: '🧋 BobaBoss', score: 5120, skin: 'boba' }
+                        ];
+                    }
+                } catch (e) {
+                    this.globalScores = [];
+                }
+                this.buildHighScoresList();
+            }
+
+            checkDailyLogin() {
+                let lastLogin = localStorage.getItem('trackrunner_last_login');
+                let today = new Date().toDateString();
+                if (lastLogin !== today) {
+                    this.dailyRewardModal.classList.remove('hidden');
+                }
+            }
+
+            updateGemDisplay() {
+                this.gemDisplay.innerText = this.gems;
+                localStorage.setItem('trackrunner_gems', this.gems);
             }
 
             getRandomHitsNeeded() {
@@ -670,13 +795,14 @@
                 const pathData = TRACK_PATHS[trackKey] || TRACK_PATHS['Circle'];
                 this.svgTrack.setAttribute('d', pathData);
                 document.getElementById('trackShadow').setAttribute('d', pathData);
+                document.getElementById('trackBackgroundFill').setAttribute('d', pathData);
                 document.getElementById('trackInnerLine').setAttribute('d', pathData);
                 this.svgPipTrack.setAttribute('d', pathData);
 
                 let extrusionHTML = '';
                 for (let i = 1; i <= 5; i++) {
                     let offset = i * 4;
-                    extrusionHTML += `<path d="${pathData}" transform="translate(${offset}, ${offset})" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />`;
+                    extrusionHTML += `<path d="${pathData}" transform="translate(${offset},${offset})" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" />`;
                 }
                 document.getElementById('trackExtrusions').innerHTML = extrusionHTML;
 
@@ -686,6 +812,7 @@
                 this.spawnNewTargetsRandomly(1);
                 this.spawnNewTargetsRandomly(2);
                 this.spawnPowerUp();
+                this.spawnHazard();
                 this.updateTargetDisplay();
             }
 
@@ -702,6 +829,17 @@
                 this.redrawPowerUpsSVG();
             }
 
+            spawnHazard() {
+                if (Math.random() < 0.5) {
+                    const progress = (Math.random() * 0.8) + 0.1;
+                    const pt = this.svgTrack.getPointAtLength(progress * this.pathLength);
+                    this.activeHazards = [{ progress, cx: pt.x, cy: pt.y, velocity: (Math.random() < 0.5 ? 1 : -1) * 0.04 }];
+                } else {
+                    this.activeHazards = [];
+                }
+                this.redrawHazardsSVG();
+            }
+
             redrawPowerUpsSVG() {
                 let html = '';
                 this.activePowerUps.forEach(p => {
@@ -709,9 +847,17 @@
                     let color = '#FFD700';
                     if (p.type === 'shield') { icon = '🛡️'; color = '#00FFFF'; }
                     if (p.type === 'freeze') { icon = '❄️'; color = '#00BFFF'; }
-                    html += `<g transform="translate(${p.cx}, ${p.cy})"><circle cx="0" cy="0" r="16" fill="${color}" opacity="0.9" filter="url(#superGlow)"/><text x="0" y="5" text-anchor="middle" font-size="14">${icon}</text></g>`;
+                    html += `<g transform="translate(${p.cx},${p.cy})"><circle cx="0" cy="0" r="16" fill="${color}" opacity="0.9" filter="url(#superGlow)"/><text x="0" y="5" text-anchor="middle" font-size="14">${icon}</text></g>`;
                 });
                 this.powerUpsGroup.innerHTML = html;
+            }
+
+            redrawHazardsSVG() {
+                let html = '';
+                this.activeHazards.forEach(h => {
+                    html += `<g transform="translate(${h.cx},${h.cy})"><polygon points="0,-16 14,12 -14,12" fill="#FF2255" filter="url(#superGlow)"/><text x="0" y="5" text-anchor="middle" font-size="12" fill="#fff">⚠️</text></g>`;
+                });
+                this.powerUpsGroup.innerHTML += html;
             }
 
             spawnNewTargetsRandomly(playerNum) {
@@ -720,7 +866,7 @@
                 let count = Math.floor(Math.random() * 2) + 1;
                 
                 if (playerNum === 1) {
-                    this.targetHitMaxTime = count === 2 ? 8.0 : 5.0;
+                    this.targetHitMaxTime = count === 2 ? 10.0 : 6.0;
                     this.targetHitTimeLeft = this.targetHitMaxTime;
                 }
                 
@@ -744,16 +890,6 @@
                 let targetsArr = playerNum === 1 ? this.activeTargetsP1 : this.activeTargetsP2;
                 targetsArr.forEach((t) => {
                     const targetPoint = this.svgTrack.getPointAtLength(t.progress * this.pathLength);
-                    const delta = 1;
-                    const p1 = this.svgTrack.getPointAtLength(Math.max(0, t.progress * this.pathLength - delta));
-                    const p2 = this.svgTrack.getPointAtLength(Math.min(this.pathLength, t.progress * this.pathLength + delta));
-                    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                    const normalAngle = angle + Math.PI / 2;
-                    const lineLen = 22;
-                    t.x1 = targetPoint.x + Math.cos(normalAngle) * lineLen;
-                    t.y1 = targetPoint.y + Math.sin(normalAngle) * lineLen;
-                    t.x2 = targetPoint.x - Math.cos(normalAngle) * lineLen;
-                    t.y2 = targetPoint.y - Math.sin(normalAngle) * lineLen;
                     t.cx = targetPoint.x;
                     t.cy = targetPoint.y;
                 });
@@ -764,11 +900,10 @@
                 let targetsArr = playerNum === 1 ? this.activeTargetsP1 : this.activeTargetsP2;
                 let html = '';
                 targetsArr.forEach((t) => {
-                    html += `<g>
-                        <line x1="${t.x1}" y1="${t.y1}" x2="${t.x2}" y2="${t.y2}" stroke="#FF00FF" stroke-width="11" stroke-linecap="round" filter="url(#superGlow)" />
-                        <line x1="${t.x1}" y1="${t.y1}" x2="${t.x2}" y2="${t.y2}" stroke="#00FFFF" stroke-width="5" stroke-linecap="round" />
-                        <circle cx="${t.cx}" cy="${t.cy}" r="22" fill="none" stroke="#FFD700" stroke-width="3" opacity="0.8" />
-                        <circle cx="${t.cx}" cy="${t.cy}" r="12" fill="#00FFCC" opacity="0.8" />
+                    html += `<g transform="translate(${t.cx},${t.cy})">
+                        <circle cx="0" cy="0" r="18" fill="#FF3333" stroke="#FFF" stroke-width="3" filter="url(#superGlow)" />
+                        <circle cx="-3" cy="-3" r="6" fill="#FF9999" opacity="0.9" />
+                        <circle cx="0" cy="0" r="24" fill="none" stroke="#FFD700" stroke-width="3" opacity="0.8" />
                     </g>`;
                 });
                 if (playerNum === 1) {
@@ -780,8 +915,11 @@
 
             renderCharacters() {
                 const skinP1 = CHARACTERS[this.currentSkinKey];
-                this.charGroup.innerHTML = skinP1.svg;
-                document.getElementById('promptCharacterIcon').innerHTML = `<svg viewBox="-30 -35 60 60" class="w-full h-full">${skinP1.svg}</svg>`;
+                const hatP1 = HATS[this.currentHatKey];
+                const petP1 = PETS[this.currentPetKey];
+                let combinedSvg = skinP1.svg + (hatP1 ? hatP1.svg : '') + (petP1 ? petP1.svg : '');
+                this.charGroup.innerHTML = combinedSvg;
+                document.getElementById('promptCharacterIcon').innerHTML = `<svg viewBox="-30 -35 60 60" class="w-full h-full">${combinedSvg}</svg>`;
                 if (this.gameMode !== 'single') {
                     document.getElementById('characterGroupPip').innerHTML = CHARACTERS['bunny'].svg;
                 }
@@ -789,34 +927,64 @@
 
             setupEventListeners() {
                 const handleP1Action = (e) => {
-                    if (e) e.preventDefault();
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    audio.init();
                     if (!this.isRunning) { this.startGame(); return; }
                     this.checkTiming(1);
                 };
                 const handleP2Action = (e) => {
-                    if (e) e.preventDefault();
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    audio.init();
                     if (this.gameMode !== 'single' && this.isRunning) { this.checkTiming(2); }
                 };
 
-                document.getElementById('btnTapAction').addEventListener('click', handleP1Action);
-                this.btnP2Action.addEventListener('click', handleP2Action);
-                document.getElementById('playArea').addEventListener('click', handleP1Action);
+                const btnTap = document.getElementById('btnTapAction');
+                btnTap.addEventListener('click', handleP1Action);
+                btnTap.addEventListener('touchstart', handleP1Action, { passive: false });
+
+                const btnP2 = document.getElementById('btnP2Action');
+                btnP2.addEventListener('click', handleP2Action);
+                btnP2.addEventListener('touchstart', handleP2Action, { passive: false });
+
+                const playArea = document.getElementById('playArea');
+                playArea.addEventListener('click', handleP1Action);
+                playArea.addEventListener('touchstart', handleP1Action, { passive: false });
 
                 window.addEventListener('keydown', (e) => {
                     if (e.code === 'Space') {
                         e.preventDefault();
+                        audio.init();
                         if (!this.isRunning) { this.startGame(); } else { handleP1Action(); }
                     } else if (e.code === 'Enter' || e.code === 'ShiftRight') {
                         e.preventDefault();
+                        audio.init();
                         handleP2Action();
                     }
                 });
 
-                document.getElementById('btnStartGame').addEventListener('click', (e) => { e.stopPropagation(); this.startGame(); });
+                document.getElementById('btnStartGame').addEventListener('click', (e) => { e.stopPropagation(); audio.init(); this.startGame(); });
                 document.getElementById('btnDismissSummary').addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.summaryModal.classList.add('hidden');
                     this.startPrompt.classList.remove('opacity-0', 'pointer-events-none');
+                });
+
+                document.getElementById('btnClaimDaily').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.gems += 25;
+                    this.updateGemDisplay();
+                    localStorage.setItem('trackrunner_last_login', new Date().toDateString());
+                    this.dailyRewardModal.classList.add('hidden');
+                });
+
+                document.getElementById('btnRefreshGlobal').addEventListener('click', () => {
+                    this.fetchGlobalLeaderboard();
                 });
 
                 document.getElementById('btnRandomTrack').addEventListener('click', (e) => {
@@ -836,9 +1004,11 @@
 
                 document.getElementById('tabTracks').addEventListener('click', (e) => this.switchTab('tracks', e.target));
                 document.getElementById('tabSkins').addEventListener('click', (e) => this.switchTab('skins', e.target));
+                document.getElementById('tabShop').addEventListener('click', (e) => this.switchTab('shop', e.target));
                 document.getElementById('tabThemes').addEventListener('click', (e) => this.switchTab('themes', e.target));
-                document.getElementById('tabMissions').addEventListener('click', (e) => this.switchTab('missions', e.target));
+                document.getElementById('tabScores').addEventListener('click', (e) => this.switchTab('scores', e.target));
                 document.getElementById('tabTrophies').addEventListener('click', (e) => this.switchTab('trophies', e.target));
+                document.getElementById('tabMissions').addEventListener('click', (e) => this.switchTab('missions', e.target));
                 document.getElementById('tabModes').addEventListener('click', (e) => this.switchTab('modes', e.target));
 
                 document.getElementById('modeBtnSingle').addEventListener('click', () => { this.setGameMode('single'); menuModal.classList.add('hidden'); });
@@ -846,8 +1016,81 @@
                 document.getElementById('modeBtnFriend').addEventListener('click', () => { this.setGameMode('friend'); menuModal.classList.add('hidden'); });
             }
 
+            watchRewardAd(rewardType, targetKey) {
+                this.adModal.classList.remove('hidden');
+                const countdownEl = document.getElementById('adCountdown');
+                const btnCloseAd = document.getElementById('btnCloseAd');
+                btnCloseAd.disabled = true;
+                btnCloseAd.className = 'w-full py-2 bg-gray-300 text-gray-500 font-game text-xs rounded-xl cursor-not-allowed transition';
+                btnCloseAd.innerText = 'PLEASE WAIT...';
+
+                let timeLeft = 3;
+                countdownEl.innerText = `${timeLeft}s`;
+
+                const interval = setInterval(() => {
+                    timeLeft--;
+                    countdownEl.innerText = `${timeLeft}s`;
+                    if (timeLeft <= 0) {
+                        clearInterval(interval);
+                        btnCloseAd.disabled = false;
+                        btnCloseAd.className = 'w-full py-2 bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-game text-xs rounded-xl hover:brightness-110 shadow-md transition cursor-pointer';
+                        btnCloseAd.innerText = 'CLAIM REWARD! 🎉';
+                    }
+                }, 1000);
+
+                btnCloseAd.onclick = () => {
+                    clearInterval(interval);
+                    this.adModal.classList.add('hidden');
+                    if (rewardType === 'gems') {
+                        this.gems += 50;
+                        this.updateGemDisplay();
+                        this.showJudgmentText('CLAIMED +50 GEMS! 💎');
+                    } else if (rewardType === 'skin') {
+                        if (CHARACTERS[targetKey]) {
+                            CHARACTERS[targetKey].unlocked = true;
+                            this.saveSkinsData();
+                            this.buildShopSelectors();
+                            this.buildSkinSelectors();
+                            this.showJudgmentText(`UNLOCKED ${CHARACTERS[targetKey].name}! 🎉`);
+                        }
+                    } else if (rewardType === 'anim') {
+                        if (ANIMATIONS[targetKey]) {
+                            ANIMATIONS[targetKey].unlocked = true;
+                            this.saveAnimsData();
+                            this.buildShopSelectors();
+                            this.buildSkinSelectors();
+                            this.showJudgmentText(`UNLOCKED ${ANIMATIONS[targetKey].name}! 🎉`);
+                        }
+                    } else if (rewardType === 'pet') {
+                        if (PETS[targetKey]) {
+                            PETS[targetKey].unlocked = true;
+                            this.savePetsData();
+                            this.buildShopSelectors();
+                            this.buildSkinSelectors();
+                            this.showJudgmentText(`UNLOCKED ${PETS[targetKey].name}! 🐾`);
+                        }
+                    } else if (rewardType === 'hat') {
+                        if (HATS[targetKey]) {
+                            HATS[targetKey].unlocked = true;
+                            this.saveHatsData();
+                            this.buildShopSelectors();
+                            this.buildSkinSelectors();
+                            this.showJudgmentText(`UNLOCKED ${HATS[targetKey].name}! 👑`);
+                        }
+                    } else if (rewardType === 'trail') {
+                        if (TRAILS[targetKey]) {
+                            TRAILS[targetKey].unlocked = true;
+                            this.saveTrailsData();
+                            this.buildShopSelectors();
+                            this.buildSkinSelectors();
+                            this.showJudgmentText(`UNLOCKED ${TRAILS[targetKey].name}! ✨`);
+                        }
+                    }
+                };
+            }
+
             switchTab(tabName, targetEl) {
-                ['Tracks', 'Skins', 'Themes', 'Missions', 'Trophies', 'Modes'].forEach(name => {
+                ['Tracks', 'Skins', 'Shop', 'Themes', 'Scores', 'Trophies', 'Missions', 'Modes'].forEach(name => {
                     document.getElementById(`tab${name}`).className = 'py-2 font-bold rounded-lg transition text-gray-600';
                     document.getElementById(`content${name}`).classList.add('hidden');
                 });
@@ -875,10 +1118,13 @@
                 this.feverActive = false;
                 this.isBossFight = false;
                 this.targetHitTimeLeft = this.targetHitMaxTime;
+                this.trailHistory = [];
                 this.updateHUD();
                 this.updateHpBar();
                 this.summaryModal.classList.add('hidden');
                 this.startPrompt.classList.add('opacity-0', 'pointer-events-none');
+                
+                this.spawnNewTargetsRandomly(1);
                 
                 this.achievements.firstRun = true;
                 this.saveAchievements();
@@ -886,13 +1132,17 @@
 
             triggerBossBattle() {
                 this.isBossFight = true;
-                this.bossHp = 10;
-                this.bossMaxHp = 10;
+                this.currentBoss = BOSSES[Math.floor(Math.random() * BOSSES.length)];
+                this.bossHp = this.currentBoss.maxHp;
+                this.bossMaxHp = this.currentBoss.maxHp;
+                
                 audio.playBossAlarm();
                 this.bossAvatarGroup.classList.remove('hidden');
+                this.bossAvatarEmoji.innerText = this.currentBoss.emoji;
+                this.bossNameLabel.innerHTML = `<i class="fa-solid fa-skull"></i> BOSS: ${this.currentBoss.name}`;
                 this.bossHpContainer.classList.remove('hidden');
                 this.updateBossHpBar();
-                this.showJudgmentText('⚠️ BOSS BATTLE INCOMING! ⚠️');
+                this.showJudgmentText(`⚠️ ${this.currentBoss.name} INCOMING! ⚠️`);
             }
 
             updateBossHpBar() {
@@ -932,13 +1182,32 @@
                 audio.playHit('MISS');
                 this.showJudgmentText('GAME OVER! 💀');
                 this.checkMissionsOnGameOver();
+                this.saveHighScore();
                 this.showSummaryScreen();
+            }
+
+            saveHighScore() {
+                let earnedGems = Math.floor(this.score / 25);
+                this.gems += earnedGems;
+                this.updateGemDisplay();
+
+                this.highScores.push({
+                    score: this.score,
+                    combo: this.maxComboReached,
+                    skin: this.currentSkinKey,
+                    date: new Date().toLocaleDateString()
+                });
+                this.highScores.sort((a, b) => b.score - a.score);
+                this.highScores = this.highScores.slice(0, 5);
+                localStorage.setItem('trackrunner_highscores', JSON.stringify(this.highScores));
+                this.buildHighScoresList();
             }
 
             showSummaryScreen() {
                 document.getElementById('sumScore').innerText = this.score;
+                let earnedGems = Math.floor(this.score / 25);
+                document.getElementById('sumGems').innerText = `+${earnedGems} 💎`;
                 document.getElementById('sumCombo').innerText = `x${this.maxComboReached}`;
-                document.getElementById('sumPerfect').innerText = this.perfectCount;
                 let accuracy = this.totalHitsAttempted > 0 ? Math.round((this.totalHitsSuccessful / this.totalHitsAttempted) * 100) : 0;
                 document.getElementById('sumAccuracy').innerText = `${accuracy}%`;
                 this.summaryModal.classList.remove('hidden');
@@ -948,24 +1217,35 @@
                 let currentProg = playerNum === 1 ? this.progress : this.progressP2;
                 let activeTargets = playerNum === 1 ? this.activeTargetsP1 : this.activeTargetsP2;
                 
+                if (playerNum === 1 && this.activeHazards.length > 0) {
+                    let h = this.activeHazards[0];
+                    let hDist = Math.abs(currentProg - h.progress);
+                    if (hDist < 0.05 || hDist > 0.95) {
+                        this.damagePlayer(1);
+                        this.activeHazards = [];
+                        return;
+                    }
+                }
+
                 if (playerNum === 1 && this.activePowerUps.length > 0) {
                     let p = this.activePowerUps[0];
                     let pDist = Math.abs(currentProg - p.progress);
                     if (pDist < 0.1 || pDist > 0.9) {
                         audio.playPowerUp();
+                        let bonusMultiplier = 1 + (this.powerUpLevel - 1) * 0.5;
                         if (p.type === 'speed') {
                             this.showJudgmentText('SPEED BOOST! ⚡');
-                            this.speed += 0.05;
+                            this.speed += 0.05 * bonusMultiplier;
                         } else if (p.type === 'shield') {
                             this.hasShield = true;
                             this.updateHpBar();
                             this.showJudgmentText('SHIELD ACTIVATED! 🛡️');
                         } else if (p.type === 'freeze') {
-                            this.targetHitTimeLeft = Math.min(this.targetHitMaxTime, this.targetHitTimeLeft + 3.0);
+                            this.targetHitTimeLeft = Math.min(this.targetHitMaxTime, this.targetHitTimeLeft + (3.0 * bonusMultiplier));
                             this.showJudgmentText('TIME FREEZE! ❄️');
                         }
                         this.activePowerUps = [];
-                        this.powerUpsGroup.innerHTML = '';
+                        this.redrawPowerUpsSVG();
                         return;
                     }
                 }
@@ -1008,24 +1288,34 @@
                 }
 
                 if (playerNum === 1) {
-                    if (this.combo > this.maxComboReached) this.maxComboReached = this.combo;
+                    if (this.combo > this.maxComboReached) {
+                        this.maxComboReached = this.combo;
+                        if (this.maxComboReached >= 50) {
+                            this.achievements.combo50 = true;
+                            this.saveAchievements();
+                        }
+                    }
                     if (successfulHit) this.totalHitsSuccessful++;
 
                     let multiplier = Math.min(5, 1 + Math.floor(this.combo / 5));
                     if (this.feverActive) multiplier *= 2;
-                    this.score += points * multiplier;
-                    audio.playHit(judgment.replace('!!', '').replace('!', ''));
-                    if (!this.isBossFight && judgment !== 'MISS!') this.showJudgmentText(judgment);
+                    let earnedPts = points * multiplier;
+                    this.score += earnedPts;
+                    
+                    audio.playHit(judgment.replace('!!', '').replace('!', ''), this.combo);
+                    if (!this.isBossFight && judgment !== 'MISS!') {
+                        this.showJudgmentText(judgment);
+                        if (matchedTargetIndex !== -1) {
+                            let t = activeTargets[matchedTargetIndex];
+                            this.showFloatingPopup(`+${earnedPts}`, t.cx, t.cy);
+                        }
+                    }
 
                     if (this.combo >= 20 && !this.feverActive) {
                         this.feverActive = true;
                         this.feverTimer = 10.0;
                         this.showJudgmentText('🌈 RAINBOW FEVER MODE! 🌈');
                         document.getElementById('svgTrackContainer').classList.add('fever-mode-active');
-                    }
-                    if (this.combo >= 50) {
-                        this.achievements.combo50 = true;
-                        this.saveAchievements();
                     }
                 } else {
                     this.scoreP2 += points;
@@ -1035,15 +1325,25 @@
                     let damage = judgment.includes('PERFECT') ? 2 : 1;
                     this.bossHp -= damage;
                     this.updateBossHpBar();
+                    if (matchedTargetIndex !== -1) {
+                        let t = activeTargets[matchedTargetIndex];
+                        this.showFloatingPopup(`-${damage} HP`, t.cx, t.cy);
+                    }
                     this.showJudgmentText(`HIT BOSS -${damage} HP! 🔥`);
                     if (this.bossHp <= 0) {
                         audio.playSymbolComplete();
                         this.showJudgmentText('VICTORY! +1000 PTS! 🎉');
                         this.score += 1000;
+                        this.gems += 20;
+                        this.updateGemDisplay();
+                        
+                        this.speed *= 1.08;
+
                         this.isBossFight = false;
                         this.bossAvatarGroup.classList.add('hidden');
                         this.bossHpContainer.classList.add('hidden');
                         this.totalHitsCounter = 0;
+
                         this.achievements.bossSlayer = true;
                         this.saveAchievements();
                     }
@@ -1091,14 +1391,25 @@
                 setTimeout(() => textEl.remove(), 550);
             }
 
+            showFloatingPopup(txt, x, y) {
+                const pop = document.createElement('div');
+                pop.className = 'absolute font-game text-sm text-yellow-300 floating-score pointer-events-none z-30 drop-shadow-[0_0_8px_#000]';
+                pop.style.left = `${x}px`;
+                pop.style.top = `${y}px`;
+                pop.innerText = txt;
+                this.judgmentOverlay.appendChild(pop);
+                setTimeout(() => pop.remove(), 700);
+            }
+
             spawnParticles() {
                 if (this.activeTargetsP1.length === 0) return;
                 const targetPoint = { x: this.activeTargetsP1[0].cx, y: this.activeTargetsP1[0].cy };
-                const trailColor = TRAILS[this.currentTrailKey].color;
+                const trailColors = TRAILS[this.currentTrailKey]?.colors || TRAILS['rainbow'].colors;
+                const baseColor = trailColors[0];
                 for (let i = 0; i < 14; i++) {
                     const particle = document.createElement('div');
                     particle.className = 'absolute w-3 h-3 rounded-full pointer-events-none shadow-[0_0_10px_#fff]';
-                    particle.style.backgroundColor = trailColor;
+                    particle.style.backgroundColor = baseColor;
                     particle.style.left = `${targetPoint.x}px`;
                     particle.style.top = `${targetPoint.y}px`;
                     this.judgmentOverlay.appendChild(particle);
@@ -1106,7 +1417,7 @@
                     const dist = 35 + Math.random() * 55;
                     particle.animate([
                         { transform: 'translate(0, 0) scale(1.2)', opacity: 1 },
-                        { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
+                        { transform: `translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
                     ], { duration: 650, easing: 'cubic-bezier(0,0,0.2,1)' }).onfinish = () => particle.remove();
                 }
             }
@@ -1156,11 +1467,15 @@
 
             buildSkinSelectors() {
                 const skinGrid = document.getElementById('skinGrid');
+                const animGrid = document.getElementById('animGrid');
+                const petGrid = document.getElementById('petGrid');
+                const hatGrid = document.getElementById('hatGrid');
                 const trailGrid = document.getElementById('trailGrid');
-                skinGrid.innerHTML = ''; trailGrid.innerHTML = '';
+                skinGrid.innerHTML = ''; animGrid.innerHTML = ''; petGrid.innerHTML = ''; hatGrid.innerHTML = ''; trailGrid.innerHTML = '';
 
                 Object.keys(CHARACTERS).forEach(key => {
                     const char = CHARACTERS[key];
+                    if (!char.unlocked) return;
                     const card = document.createElement('button');
                     card.className = `p-3 rounded-2xl glass-card flex items-center gap-3 border-2 ${this.currentSkinKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
                     card.innerHTML = `<div class="w-10 h-10"><svg viewBox="-30 -35 60 60" class="w-full h-full">${char.svg}</svg></div><span class="font-bold text-sm text-purple-900">${char.name}</span>`;
@@ -1168,14 +1483,143 @@
                     skinGrid.appendChild(card);
                 });
 
+                Object.keys(ANIMATIONS).forEach(key => {
+                    const anim = ANIMATIONS[key];
+                    if (!anim.unlocked) return;
+                    const card = document.createElement('button');
+                    card.className = `p-2.5 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentAnimKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
+                    card.innerHTML = `<span class="font-game text-xs text-purple-900">${anim.name}</span>`;
+                    card.onclick = () => { this.currentAnimKey = key; this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
+                    animGrid.appendChild(card);
+                });
+
+                Object.keys(PETS).forEach(key => {
+                    const pet = PETS[key];
+                    if (!pet.unlocked) return;
+                    const card = document.createElement('button');
+                    card.className = `p-2.5 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentPetKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
+                    card.innerHTML = `<div class="w-8 h-8 flex items-center justify-center"><svg viewBox="-30 -30 60 60" class="w-full h-full">${pet.svg}</svg></div><span class="font-game text-[10px] text-purple-900 mt-1">${pet.name}</span>`;
+                    card.onclick = () => { this.currentPetKey = key; this.renderCharacters(); this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
+                    petGrid.appendChild(card);
+                });
+
+                Object.keys(HATS).forEach(key => {
+                    const hat = HATS[key];
+                    if (!hat.unlocked) return;
+                    const card = document.createElement('button');
+                    card.className = `p-2.5 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentHatKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
+                    card.innerHTML = `<div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 50 30" class="w-full h-full">${hat.svg}</svg></div><span class="font-game text-[10px] text-purple-900 mt-1">${hat.name}</span>`;
+                    card.onclick = () => { this.currentHatKey = key; this.renderCharacters(); this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
+                    hatGrid.appendChild(card);
+                });
+
                 Object.keys(TRAILS).forEach(key => {
                     const trail = TRAILS[key];
+                    if (!trail.unlocked) return;
                     const card = document.createElement('button');
                     card.className = `p-2 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentTrailKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
-                    card.innerHTML = `<div class="w-4 h-4 rounded-full mb-1" style="background:${trail.color}"></div><span class="font-game text-xs text-purple-900">${trail.name}</span>`;
+                    card.innerHTML = `<div class="w-4 h-4 rounded-full mb-1" style="background:${trail.colors[0]}"></div><span class="font-game text-xs text-purple-900">${trail.name}</span>`;
                     card.onclick = () => { this.currentTrailKey = key; this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
                     trailGrid.appendChild(card);
                 });
+            }
+
+            buildShopSelectors() {
+                const shopGrid = document.getElementById('shopGrid');
+                shopGrid.innerHTML = '';
+
+                const adGemCard = document.createElement('div');
+                adGemCard.className = `p-3 rounded-2xl glass-card flex items-center justify-between border-2 border-indigo-400 bg-indigo-50/50`;
+                adGemCard.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-tv"></i></div>
+                        <div><div class="font-bold text-sm text-purple-900">Watch Ad for Free Gems</div><div class="text-xs text-gray-600">Reward: +50 💎</div></div>
+                    </div>
+                    <button class="px-4 py-1.5 rounded-xl font-game text-xs text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:brightness-110 shadow-md">
+                        WATCH AD
+                    </button>
+                `;
+                adGemCard.querySelector('button').onclick = () => this.watchRewardAd('gems');
+                shopGrid.appendChild(adGemCard);
+
+                let powCost = this.powerUpLevel * 75;
+                const powCard = document.createElement('div');
+                powCard.className = `p-3 rounded-2xl glass-card flex items-center justify-between border-2 border-amber-400 bg-amber-50/40`;
+                powCard.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-400 text-white flex items-center justify-center text-lg"><i class="fa-solid fa-bolt"></i></div>
+                        <div><div class="font-bold text-sm text-purple-900">Power-Up Booster (Lv. ${this.powerUpLevel})</div><div class="text-xs text-gray-600">Cost: ${powCost} 💎</div></div>
+                    </div>
+                    <button class="px-4 py-1.5 rounded-xl font-game text-xs text-white bg-gradient-to-r from-amber-500 to-yellow-500 hover:brightness-110 shadow-md">
+                        UPGRADE
+                    </button>
+                `;
+                powCard.querySelector('button').onclick = () => {
+                    if (this.gems >= powCost) {
+                        this.gems -= powCost;
+                        this.powerUpLevel++;
+                        localStorage.setItem('trackrunner_pow_lvl', this.powerUpLevel);
+                        this.updateGemDisplay();
+                        this.buildShopSelectors();
+                    } else {
+                        alert('Not enough gems!');
+                    }
+                };
+                shopGrid.appendChild(powCard);
+
+                Object.keys(TRAILS).forEach(key => {
+                    const trail = TRAILS[key];
+                    if (key === 'rainbow') return;
+                    const card = document.createElement('div');
+                    card.className = `p-3 rounded-2xl glass-card flex items-center justify-between border-2 ${trail.unlocked ? 'border-emerald-400 bg-emerald-50/40' : 'border-purple-300'}`;
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md" style="background:${trail.colors[0]}"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                            <div><div class="font-bold text-sm text-purple-900">${trail.name} (Trail)</div><div class="text-xs text-gray-600">${trail.unlocked ? 'Unlocked' : `Cost: ${trail.cost} 💎`}</div></div>
+                        </div>
+                        <div class="flex gap-2">
+                            ${!trail.unlocked ? `<button class="watch-ad-btn px-2.5 py-1.5 rounded-xl font-game text-[10px] text-white bg-indigo-500 hover:brightness-110 shadow-md"><i class="fa-solid fa-tv mr-1"></i> Ad</button>` : ''}
+                            <button class="buy-btn px-4 py-1.5 rounded-xl font-game text-xs text-white ${trail.unlocked ? 'bg-emerald-500' : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 shadow-md'}">
+                                ${trail.unlocked ? 'OWNED' : 'BUY'}
+                            </button>
+                        </div>
+                    `;
+                    if (!trail.unlocked) {
+                        card.querySelector('.watch-ad-btn').onclick = () => this.watchRewardAd('trail', key);
+                        card.querySelector('.buy-btn').onclick = () => {
+                            if (this.gems >= trail.cost) {
+                                this.gems -= trail.cost;
+                                trail.unlocked = true;
+                                this.updateGemDisplay();
+                                this.saveTrailsData();
+                                this.buildShopSelectors();
+                                this.buildSkinSelectors();
+                            } else { alert('Not enough gems!'); }
+                        };
+                    }
+                    shopGrid.appendChild(card);
+                });
+            }
+
+            saveSkinsData() {
+                let skinMap = {}; Object.keys(CHARACTERS).forEach(k => { skinMap[k] = CHARACTERS[k].unlocked; });
+                localStorage.setItem('trackrunner_skins', JSON.stringify(skinMap));
+            }
+            saveAnimsData() {
+                let animMap = {}; Object.keys(ANIMATIONS).forEach(k => { animMap[k] = ANIMATIONS[k].unlocked; });
+                localStorage.setItem('trackrunner_anims', JSON.stringify(animMap));
+            }
+            savePetsData() {
+                let petMap = {}; Object.keys(PETS).forEach(k => { petMap[k] = PETS[k].unlocked; });
+                localStorage.setItem('trackrunner_pets', JSON.stringify(petMap));
+            }
+            saveHatsData() {
+                let hatMap = {}; Object.keys(HATS).forEach(k => { hatMap[k] = HATS[k].unlocked; });
+                localStorage.setItem('trackrunner_hats', JSON.stringify(hatMap));
+            }
+            saveTrailsData() {
+                let trailMap = {}; Object.keys(TRAILS).forEach(k => { trailMap[k] = TRAILS[k].unlocked; });
+                localStorage.setItem('trackrunner_trails', JSON.stringify(trailMap));
             }
 
             buildThemeSelectors() {
@@ -1194,6 +1638,77 @@
                     };
                     themeGrid.appendChild(card);
                 });
+            }
+
+            buildHighScoresList() {
+                const scoresGrid = document.getElementById('scoresGrid');
+                scoresGrid.innerHTML = '';
+                
+                const globalHeader = document.createElement('div');
+                globalHeader.className = 'text-[10px] font-bold uppercase text-indigo-700 tracking-wider pt-1 pb-0.5';
+                globalHeader.innerText = '🌐 Global Leaderboard (Online)';
+                scoresGrid.appendChild(globalHeader);
+
+                if (this.globalScores.length === 0) {
+                    scoresGrid.innerHTML += `<div class="text-xs text-gray-500 text-center py-2">Loading global rankings...</div>`;
+                } else {
+                    this.globalScores.forEach((item, index) => {
+                        const card = document.createElement('div');
+                        card.className = `p-2.5 rounded-2xl glass-card flex items-center justify-between border-2 border-indigo-200`;
+                        card.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <div class="w-6 h-6 rounded-full bg-indigo-500 text-white font-game text-[10px] flex items-center justify-center">${index + 1}</div>
+                                <div><div class="font-bold text-xs text-purple-900">${item.name}</div><div class="text-[10px] text-gray-600">Score: ${item.score}</div></div>
+                            </div>
+                            <div class="w-7 h-7"><svg viewBox="-30 -35 60 60" class="w-full h-full">${CHARACTERS[item.skin].svg}</svg></div>
+                        `;
+                        scoresGrid.appendChild(card);
+                    });
+                }
+
+                const localHeader = document.createElement('div');
+                localHeader.className = 'text-[10px] font-bold uppercase text-pink-600 tracking-wider pt-3 pb-0.5';
+                localHeader.innerText = '🏆 My Local Best Scores';
+                scoresGrid.appendChild(localHeader);
+
+                if (this.highScores.length === 0) {
+                    scoresGrid.innerHTML += `<div class="text-xs text-gray-500 text-center py-2">No local high scores recorded yet!</div>`;
+                    return;
+                }
+                this.highScores.forEach((item, index) => {
+                    const card = document.createElement('div');
+                    card.className = `p-2.5 rounded-2xl glass-card flex items-center justify-between border-2 border-pink-200`;
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full bg-pink-500 text-white font-game text-[10px] flex items-center justify-center">${index + 1}</div>
+                            <div><div class="font-bold text-xs text-purple-900">Score: ${item.score}</div><div class="text-[10px] text-gray-600">Max Combo: x${item.combo} • ${item.date}</div></div>
+                        </div>
+                        <div class="w-7 h-7"><svg viewBox="-30 -35 60 60" class="w-full h-full">${CHARACTERS[item.skin]?.svg || CHARACTERS['cat'].svg}</svg></div>
+                    `;
+                    scoresGrid.appendChild(card);
+                });
+            }
+
+            buildTrophyList() {
+                const trophyGrid = document.getElementById('trophyGrid');
+                trophyGrid.innerHTML = '';
+                const list = [
+                    { key: 'firstRun', title: 'First Steps', desc: 'Complete your first track run' },
+                    { key: 'combo50', title: 'Combo Master', desc: 'Reach a combo of x50' },
+                    { key: 'bossSlayer', title: 'Dragon Slayer', desc: 'Defeat a Boss' }
+                ];
+                list.forEach(item => {
+                    const unlocked = this.achievements[item.key];
+                    const card = document.createElement('div');
+                    card.className = `p-3 rounded-2xl glass-card flex items-center gap-3 border-2 ${unlocked ? 'border-yellow-400 bg-yellow-50/40' : 'border-gray-300 opacity-60'}`;
+                    card.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center text-xl ${unlocked ? 'bg-yellow-400 text-white' : 'bg-gray-300 text-gray-500'}"><i class="fa-solid fa-trophy"></i></div><div><div class="font-bold text-sm text-purple-900">${item.title}</div><div class="text-xs text-gray-600">${item.desc}</div></div>`;
+                    trophyGrid.appendChild(card);
+                });
+            }
+
+            saveAchievements() {
+                localStorage.setItem('trackrunner_achievements', JSON.stringify(this.achievements));
+                this.buildTrophyList();
             }
 
             checkMissionsOnGameOver() {
@@ -1216,28 +1731,6 @@
                     card.innerHTML = `<div><div class="font-bold text-sm text-purple-900">${m.desc}</div><div class="text-[10px] text-gray-600">Progress: ${m.current}/${m.target}</div></div><div class="font-game text-xs px-3 py-1 rounded-full ${isDone ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-500'}">${isDone ? 'COMPLETED' : 'IN PROGRESS'}</div>`;
                     missionGrid.appendChild(card);
                 });
-            }
-
-            buildTrophyList() {
-                const trophyGrid = document.getElementById('trophyGrid');
-                trophyGrid.innerHTML = '';
-                const list = [
-                    { key: 'firstRun', title: 'First Steps', desc: 'Start your first track run' },
-                    { key: 'combo50', title: 'Combo Master', desc: 'Reach a combo of x50' },
-                    { key: 'bossSlayer', title: 'Dragon Slayer', desc: 'Defeat the Boss' }
-                ];
-                list.forEach(item => {
-                    const unlocked = this.achievements[item.key];
-                    const card = document.createElement('div');
-                    card.className = `p-3 rounded-2xl glass-card flex items-center gap-3 border-2 ${unlocked ? 'border-yellow-400 bg-yellow-50/40' : 'border-gray-300 opacity-60'}`;
-                    card.innerHTML = `<div class="w-10 h-10 rounded-full flex items-center justify-center text-xl ${unlocked ? 'bg-yellow-400 text-white' : 'bg-gray-300 text-gray-500'}"><i class="fa-solid fa-trophy"></i></div><div><div class="font-bold text-sm text-purple-900">${item.title}</div><div class="text-xs text-gray-600">${item.desc}</div></div>`;
-                    trophyGrid.appendChild(card);
-                });
-            }
-
-            saveAchievements() {
-                localStorage.setItem('trackrunner_achievements', JSON.stringify(this.achievements));
-                this.buildTrophyList();
             }
 
             setGameMode(mode) {
@@ -1298,8 +1791,13 @@
                     if (this.isBossFight) currentRunSpeed *= 1.25;
 
                     this.progress += currentRunSpeed * this.direction * dt;
-                    if (this.progress >= 1.0) { this.progress = 1.0; this.direction = -1; }
-                    else if (this.progress <= 0.0) { this.progress = 0.0; this.direction = 1; }
+                    if (this.progress >= 1.0) { 
+                        this.progress = 1.0; 
+                        this.direction = -1;
+                    } else if (this.progress <= 0.0) { 
+                        this.progress = 0.0; 
+                        this.direction = 1;
+                    }
 
                     const currentLen1 = this.progress * this.pathLength;
                     const point1 = this.svgTrack.getPointAtLength(currentLen1);
@@ -1307,8 +1805,36 @@
                     const p1B = this.svgTrack.getPointAtLength(Math.min(this.pathLength, currentLen1 + 2));
                     let angle1 = Math.atan2(p1B.y - p1A.y, p1B.x - p1A.x) * (180 / Math.PI);
                     if (this.direction === -1) angle1 += 180;
-                    const bounce1 = Math.sin(timestamp * 0.015) * 4;
-                    this.charGroup.setAttribute('transform', `translate(${point1.x}, ${point1.y + bounce1}) rotate(${angle1})`);
+                    
+                    let animTransform = `translate(${point1.x}, ${point1.y}) rotate(${angle1})`;
+                    if (this.currentAnimKey === 'bounce') {
+                        const jumpBounce1 = -Math.abs(Math.sin(timestamp * 0.012)) * 12;
+                        animTransform = `translate(${point1.x}, ${point1.y + jumpBounce1}) rotate(${angle1})`;
+                    } else if (this.currentAnimKey === 'spin') {
+                        const spinAngle = timestamp * 0.3;
+                        animTransform = `translate(${point1.x}, ${point1.y}) rotate(${angle1 + spinAngle})`;
+                    } else if (this.currentAnimKey === 'float') {
+                        const floatY = Math.sin(timestamp * 0.006) * 16;
+                        animTransform = `translate(${point1.x}, ${point1.y + floatY}) rotate(${angle1})`;
+                    }
+                    this.charGroup.setAttribute('transform', animTransform);
+
+                    this.trailHistory.unshift({ x: point1.x, y: point1.y });
+                    if (this.trailHistory.length > 25) {
+                        this.trailHistory.pop();
+                    }
+
+                    let trailColors = TRAILS[this.currentTrailKey]?.colors || TRAILS['rainbow'].colors;
+                    let trailHtml = '';
+                    this.trailHistory.forEach((pos, idx) => {
+                        let pct = idx / this.trailHistory.length;
+                        let colorIndex = Math.floor(pct * (trailColors.length - 1));
+                        let color = trailColors[colorIndex];
+                        let radius = Math.max(3, 16 * (1 - pct));
+                        let opacity = Math.max(0.15, 0.95 * (1 - pct));
+                        trailHtml += `<circle cx="${pos.x}" cy="${pos.y}" r="${radius}" fill="${color}" opacity="${opacity}" filter="url(#superGlow)" />`;
+                    });
+                    this.trailBubblesGroup.innerHTML = trailHtml;
 
                     if (this.gameMode !== 'single') {
                         let comSpeed = currentRunSpeed;
@@ -1328,7 +1854,7 @@
                         const p2B = this.svgTrack.getPointAtLength(Math.min(this.pathLength, currentLen2 + 2));
                         let angle2 = Math.atan2(p2B.y - p2A.y, p2B.x - p2A.x) * (180 / Math.PI);
                         if (this.directionP2 === -1) angle2 += 180;
-                        document.getElementById('characterGroupPip').innerHTML = `<g transform="translate(${point2.x}, ${point2.y + Math.cos(timestamp * 0.015) * 4}) rotate(${angle2}) scale(0.85)">${CHARACTERS['bunny'].svg}</g>`;
+                        document.getElementById('characterGroupPip').innerHTML = `<g transform="translate(${point2.x}, ${point2.y - Math.abs(Math.cos(timestamp * 0.012)) * 12}) rotate(${angle2}) scale(0.85)">${CHARACTERS['bunny'].svg}</g>`;
                     }
                 }
                 requestAnimationFrame((t) => this.gameLoop(t));
