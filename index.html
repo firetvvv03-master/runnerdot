@@ -295,7 +295,7 @@
                         <div class="font-game text-sm text-purple-900 mb-1">Day 1 Reward</div>
                         <div class="font-game text-2xl text-cyan-500">+25 💎</div>
                     </div>
-                    <button id="btnClaimDaily" class="w-full py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-game text-sm rounded-xl shadow-md hover:brightness-110 active:scale-95 transition">
+                    <button id="btnClaimDaily" class="w-full py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-game text-base rounded-xl shadow-md hover:brightness-110 active:scale-95 transition cursor-pointer">
                         CLAIM REWARD!
                     </button>
                 </div>
@@ -564,9 +564,9 @@
         };
 
         const ANIMATIONS = {
-            'bounce': { name: 'Standard Bounce', cost: 0, unlocked: true },
-            'spin': { name: 'Hyper Spin', cost: 70, unlocked: false },
-            'float': { name: 'Gentle Float', cost: 90, unlocked: false }
+            'bounce': { name: 'Standard Bounce', cost: 0, unlocked: true, icon: '⬆️' },
+            'spin': { name: 'Hyper Spin', cost: 70, unlocked: false, icon: '🔄' },
+            'float': { name: 'Gentle Float', cost: 90, unlocked: false, icon: '🎈' }
         };
 
         const PETS = {
@@ -792,7 +792,7 @@
                 this.hitsOnCurrentSymbol = 0;
                 this.targetHitsNeeded = this.getRandomHitsNeeded();
                 
-                const pathData = TRACK_PATHS[trackKey] || TRACK_PATHS['Circle'];
+                const pathData = TRACK_PATHS[trackKey.toUpperCase()] || TRACK_PATHS['Circle'];
                 this.svgTrack.setAttribute('d', pathData);
                 document.getElementById('trackShadow').setAttribute('d', pathData);
                 document.getElementById('trackBackgroundFill').setAttribute('d', pathData);
@@ -975,13 +975,19 @@
                     this.startPrompt.classList.remove('opacity-0', 'pointer-events-none');
                 });
 
-                document.getElementById('btnClaimDaily').addEventListener('click', (e) => {
-                    e.stopPropagation();
+                const handleDailyClaim = (e) => {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
                     this.gems += 25;
                     this.updateGemDisplay();
                     localStorage.setItem('trackrunner_last_login', new Date().toDateString());
                     this.dailyRewardModal.classList.add('hidden');
-                });
+                };
+                const btnClaimDaily = document.getElementById('btnClaimDaily');
+                btnClaimDaily.addEventListener('click', handleDailyClaim);
+                btnClaimDaily.addEventListener('touchend', handleDailyClaim, { passive: false });
 
                 document.getElementById('btnRefreshGlobal').addEventListener('click', () => {
                     this.fetchGlobalLeaderboard();
@@ -1117,6 +1123,7 @@
                 this.hasShield = false;
                 this.feverActive = false;
                 this.isBossFight = false;
+                this.bossHp = 10;
                 this.targetHitTimeLeft = this.targetHitMaxTime;
                 this.trailHistory = [];
                 this.updateHUD();
@@ -1143,6 +1150,8 @@
                 this.bossHpContainer.classList.remove('hidden');
                 this.updateBossHpBar();
                 this.showJudgmentText(`⚠️ ${this.currentBoss.name} INCOMING! ⚠️`);
+
+                this.spawnNewTargetsRandomly(1);
             }
 
             updateBossHpBar() {
@@ -1179,6 +1188,10 @@
 
             gameOver() {
                 this.isRunning = false;
+                this.isBossFight = false;
+                this.bossHp = 10;
+                this.bossAvatarGroup.classList.add('hidden');
+                this.bossHpContainer.classList.add('hidden');
                 audio.playHit('MISS');
                 this.showJudgmentText('GAME OVER! 💀');
                 this.checkMissionsOnGameOver();
@@ -1208,7 +1221,7 @@
                 let earnedGems = Math.floor(this.score / 25);
                 document.getElementById('sumGems').innerText = `+${earnedGems} 💎`;
                 document.getElementById('sumCombo').innerText = `x${this.maxComboReached}`;
-                let accuracy = this.totalHitsAttempted > 0 ? Math.round((this.totalHitsSuccessful / this.totalHitsAttempted) * 100) : 0;
+                let accuracy = this.totalHitsAttempted > 0 ? Math.min(100, Math.round((this.totalHitsSuccessful / this.totalHitsAttempted) * 100)) : 0;
                 document.getElementById('sumAccuracy').innerText = `${accuracy}%`;
                 this.summaryModal.classList.remove('hidden');
             }
@@ -1488,7 +1501,7 @@
                     if (!anim.unlocked) return;
                     const card = document.createElement('button');
                     card.className = `p-2.5 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentAnimKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
-                    card.innerHTML = `<span class="font-game text-xs text-purple-900">${anim.name}</span>`;
+                    card.innerHTML = `<span class="text-lg mb-0.5">${anim.icon}</span><span class="font-game text-xs text-purple-900">${anim.name}</span>`;
                     card.onclick = () => { this.currentAnimKey = key; this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
                     animGrid.appendChild(card);
                 });
@@ -1498,7 +1511,7 @@
                     if (!pet.unlocked) return;
                     const card = document.createElement('button');
                     card.className = `p-2.5 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentPetKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
-                    card.innerHTML = `<div class="w-8 h-8 flex items-center justify-center"><svg viewBox="-30 -30 60 60" class="w-full h-full">${pet.svg}</svg></div><span class="font-game text-[10px] text-purple-900 mt-1">${pet.name}</span>`;
+                    card.innerHTML = `<div class="w-8 h-8 flex items-center justify-center">${pet.svg ? `<svg viewBox="-30 -30 60 60" class="w-full h-full">${pet.svg}</svg>` : '<i class="fa-solid fa-ban text-gray-400"></i>'}</div><span class="font-game text-[10px] text-purple-900 mt-1">${pet.name}</span>`;
                     card.onclick = () => { this.currentPetKey = key; this.renderCharacters(); this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
                     petGrid.appendChild(card);
                 });
@@ -1508,7 +1521,7 @@
                     if (!hat.unlocked) return;
                     const card = document.createElement('button');
                     card.className = `p-2.5 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentHatKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
-                    card.innerHTML = `<div class="w-8 h-8 flex items-center justify-center"><svg viewBox="0 0 50 30" class="w-full h-full">${hat.svg}</svg></div><span class="font-game text-[10px] text-purple-900 mt-1">${hat.name}</span>`;
+                    card.innerHTML = `<div class="w-8 h-8 flex items-center justify-center">${hat.svg ? `<svg viewBox="0 0 50 30" class="w-full h-full">${hat.svg}</svg>` : '<i class="fa-solid fa-ban text-gray-400"></i>'}</div><span class="font-game text-[10px] text-purple-900 mt-1">${hat.name}</span>`;
                     card.onclick = () => { this.currentHatKey = key; this.renderCharacters(); this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
                     hatGrid.appendChild(card);
                 });
@@ -1518,7 +1531,7 @@
                     if (!trail.unlocked) return;
                     const card = document.createElement('button');
                     card.className = `p-2 rounded-xl glass-card flex flex-col items-center justify-center border-2 ${this.currentTrailKey === key ? 'border-pink-500 bg-white/80' : 'border-transparent'}`;
-                    card.innerHTML = `<div class="w-4 h-4 rounded-full mb-1" style="background:${trail.colors[0]}"></div><span class="font-game text-xs text-purple-900">${trail.name}</span>`;
+                    card.innerHTML = `<div class="w-4 h-4 rounded-full mb-1 shadow-md" style="background:${trail.colors[0]}"></div><span class="font-game text-xs text-purple-900">${trail.name}</span>`;
                     card.onclick = () => { this.currentTrailKey = key; this.buildSkinSelectors(); document.getElementById('menuModal').classList.add('hidden'); };
                     trailGrid.appendChild(card);
                 });
@@ -1567,38 +1580,65 @@
                 };
                 shopGrid.appendChild(powCard);
 
-                Object.keys(TRAILS).forEach(key => {
-                    const trail = TRAILS[key];
-                    if (key === 'rainbow') return;
-                    const card = document.createElement('div');
-                    card.className = `p-3 rounded-2xl glass-card flex items-center justify-between border-2 ${trail.unlocked ? 'border-emerald-400 bg-emerald-50/40' : 'border-purple-300'}`;
-                    card.innerHTML = `
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md" style="background:${trail.colors[0]}"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                            <div><div class="font-bold text-sm text-purple-900">${trail.name} (Trail)</div><div class="text-xs text-gray-600">${trail.unlocked ? 'Unlocked' : `Cost: ${trail.cost} 💎`}</div></div>
-                        </div>
-                        <div class="flex gap-2">
-                            ${!trail.unlocked ? `<button class="watch-ad-btn px-2.5 py-1.5 rounded-xl font-game text-[10px] text-white bg-indigo-500 hover:brightness-110 shadow-md"><i class="fa-solid fa-tv mr-1"></i> Ad</button>` : ''}
-                            <button class="buy-btn px-4 py-1.5 rounded-xl font-game text-xs text-white ${trail.unlocked ? 'bg-emerald-500' : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 shadow-md'}">
-                                ${trail.unlocked ? 'OWNED' : 'BUY'}
-                            </button>
-                        </div>
-                    `;
-                    if (!trail.unlocked) {
-                        card.querySelector('.watch-ad-btn').onclick = () => this.watchRewardAd('trail', key);
-                        card.querySelector('.buy-btn').onclick = () => {
-                            if (this.gems >= trail.cost) {
-                                this.gems -= trail.cost;
-                                trail.unlocked = true;
-                                this.updateGemDisplay();
-                                this.saveTrailsData();
-                                this.buildShopSelectors();
-                                this.buildSkinSelectors();
-                            } else { alert('Not enough gems!'); }
-                        };
-                    }
-                    shopGrid.appendChild(card);
-                });
+                const renderShopSection = (title, itemsObj, saveDataFn, typeName) => {
+                    const header = document.createElement('div');
+                    header.className = 'text-xs font-bold uppercase text-gray-500 tracking-wider pt-2';
+                    header.innerText = title;
+                    shopGrid.appendChild(header);
+
+                    Object.keys(itemsObj).forEach(key => {
+                        const item = itemsObj[key];
+                        if (item.cost === 0) return;
+
+                        let previewHtml = `<div class="w-10 h-10 rounded-full flex items-center justify-center text-white bg-purple-500 shadow-md font-game text-xs">✨</div>`;
+                        if (typeName === 'skin' && item.svg) {
+                            previewHtml = `<div class="w-10 h-10"><svg viewBox="-30 -35 60 60" class="w-full h-full">${item.svg}</svg></div>`;
+                        } else if (typeName === 'pet' && item.svg) {
+                            previewHtml = `<div class="w-10 h-10 flex items-center justify-center"><svg viewBox="-30 -30 60 60" class="w-full h-full">${item.svg}</svg></div>`;
+                        } else if (typeName === 'hat' && item.svg) {
+                            previewHtml = `<div class="w-10 h-10 flex items-center justify-center"><svg viewBox="0 0 50 30" class="w-full h-full">${item.svg}</svg></div>`;
+                        } else if (typeName === 'anim') {
+                            previewHtml = `<div class="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center text-base">${item.icon}</div>`;
+                        } else if (typeName === 'trail') {
+                            previewHtml = `<div class="w-10 h-10 rounded-full shadow-md flex items-center justify-center" style="background:${item.colors[0]}"><div class="w-4 h-4 rounded-full bg-white/70"></div></div>`;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = `p-3 rounded-2xl glass-card flex items-center justify-between border-2 ${item.unlocked ? 'border-emerald-400 bg-emerald-50/40' : 'border-purple-300'}`;
+                        card.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                ${previewHtml}
+                                <div><div class="font-bold text-sm text-purple-900">${item.name}</div><div class="text-xs text-gray-600">${item.unlocked ? 'Unlocked' : `Cost: ${item.cost} 💎`}</div></div>
+                            </div>
+                            <div class="flex gap-2">
+                                ${!item.unlocked ? `<button class="watch-ad-btn px-2.5 py-1.5 rounded-xl font-game text-[10px] text-white bg-indigo-500 hover:brightness-110 shadow-md"><i class="fa-solid fa-tv mr-1"></i> Ad</button>` : ''}
+                                <button class="buy-btn px-4 py-1.5 rounded-xl font-game text-xs text-white ${item.unlocked ? 'bg-emerald-500' : 'bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 shadow-md'}">
+                                    ${item.unlocked ? 'OWNED' : 'BUY'}
+                                </button>
+                            </div>
+                        `;
+                        if (!item.unlocked) {
+                            card.querySelector('.watch-ad-btn').onclick = () => this.watchRewardAd(typeName, key);
+                            card.querySelector('.buy-btn').onclick = () => {
+                                if (this.gems >= item.cost) {
+                                    this.gems -= item.cost;
+                                    item.unlocked = true;
+                                    this.updateGemDisplay();
+                                    saveDataFn.call(this);
+                                    this.buildShopSelectors();
+                                    this.buildSkinSelectors();
+                                } else { alert('Not enough gems!'); }
+                            };
+                        }
+                        shopGrid.appendChild(card);
+                    });
+                };
+
+                renderShopSection('Characters & Skins', CHARACTERS, this.saveSkinsData, 'skin');
+                renderShopSection('Animation Styles', ANIMATIONS, this.saveAnimsData, 'anim');
+                renderShopSection('Pet Companions', PETS, this.savePetsData, 'pet');
+                renderShopSection('Cosmetic Hats', HATS, this.saveHatsData, 'hat');
+                renderShopSection('Runner Trails', TRAILS, this.saveTrailsData, 'trail');
             }
 
             saveSkinsData() {
@@ -1776,7 +1816,8 @@
                         this.updateTargetPositions(2);
                     }
 
-                    if (!this.isBossFight && this.activeTargetsP1.length > 0) {
+                    // Fix: Allow target timer to run during boss stage as well
+                    if (this.activeTargetsP1.length > 0) {
                         this.targetHitTimeLeft -= dt;
                         if (this.targetHitTimeLeft <= 0) {
                             this.damagePlayer(1);
@@ -1849,9 +1890,9 @@
                         else if (this.progressP2 <= 0.0) { this.progressP2 = 0.0; this.directionP2 = 1; }
 
                         const currentLen2 = this.progressP2 * this.pathLength;
-                        const point2 = this.svgTrack.getPointAtLength(currentLen2);
-                        const p2A = this.svgTrack.getPointAtLength(Math.max(0, currentLen2 - 2));
-                        const p2B = this.svgTrack.getPointAtLength(Math.min(this.pathLength, currentLen2 + 2));
+                        const point2 = this.svgPipTrack.getPointAtLength(currentLen2);
+                        const p2A = this.svgPipTrack.getPointAtLength(Math.max(0, currentLen2 - 2));
+                        const p2B = this.svgPipTrack.getPointAtLength(Math.min(this.pathLength, currentLen2 + 2));
                         let angle2 = Math.atan2(p2B.y - p2A.y, p2B.x - p2A.x) * (180 / Math.PI);
                         if (this.directionP2 === -1) angle2 += 180;
                         document.getElementById('characterGroupPip').innerHTML = `<g transform="translate(${point2.x}, ${point2.y - Math.abs(Math.cos(timestamp * 0.012)) * 12}) rotate(${angle2}) scale(0.85)">${CHARACTERS['bunny'].svg}</g>`;
